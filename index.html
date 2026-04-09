@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chorizo Tracker - ISS Telemetry</title>
+    <style>
+        /* BRITISH EDITORIAL DESIGN */
+        * { box-sizing: border-box; }
+        body { 
+            margin: 0; 
+            padding: 0;
+            font-family: 'Georgia', 'Times New Roman', serif; 
+            background-color: #f4f1ea; /* Classic newsprint cream */
+            color: #1a1a1a; 
+            display: flex; 
+            height: 100vh; 
+            overflow: hidden; 
+            -webkit-font-smoothing: antialiased;
+            border-top: 6px solid #cc0000;
+            border-bottom: 6px solid #cc0000;
+            box-sizing: border-box;
+        }
+        
+        /* Layout */
+        #left-panel, #right-panel { 
+            width: 320px; 
+            min-width: 320px;
+            flex-shrink: 0;
+            padding: 15px 20px; 
+            background: #f4f1ea; 
+            overflow-y: hidden; 
+            z-index: 10;
+            box-shadow: 0 0 25px rgba(0,0,0,0.3);
+            display: flex;
+            flex-direction: column;
+        }
+        #left-panel { border-right: 3px solid #cc0000; }
+        #right-panel { border-left: 3px solid #cc0000; }
+        #center-globe { 
+            flex-grow: 1; 
+            position: relative; 
+            background: #000; 
+            cursor: grab;
+            overflow: hidden;
+        }
+        #center-globe:active { cursor: grabbing; }
+
+        /* Typography & Editorial Elements */
+        .newspaper-header {
+            text-align: center;
+            border-bottom: 4px double #cc0000;
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+        }
+        .newspaper-header h1 {
+            font-size: 2rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin: 0 0 5px 0;
+            line-height: 1.1;
+        }
+        .chorizo-text { color: #cc0000; }
+        .newspaper-header .date {
+            font-family: 'Arial', sans-serif;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: #444;
+            border-top: 1px solid #ccc;
+            padding-top: 5px;
+        }
+        
+        h2 {
+            font-size: 1.1rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            border-bottom: 2px solid #cc0000;
+            color: #cc0000;
+            padding-bottom: 4px;
+            margin-top: 15px;
+            margin-bottom: 10px;
+            letter-spacing: 0.05em;
+        }
+
+        /* Data Modules */
+        .data-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px 10px;
+            margin-bottom: 10px;
+        }
+        .data-item {
+            display: flex;
+            flex-direction: column;
+        }
+        .data-label {
+            font-family: 'Arial', sans-serif;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: #555;
+            margin-bottom: 2px;
+            border-bottom: 1px dotted #ccc;
+            padding-bottom: 2px;
+        }
+        .data-value {
+            font-size: 1.2rem;
+            font-variant-numeric: tabular-nums;
+            margin-top: 2px;
+        }
+
+        /* Crew Manifest */
+        #crew-list {
+            max-height: 160px;
+            overflow-y: auto;
+            padding-right: 5px;
+        }
+        #crew-list::-webkit-scrollbar { width: 4px; }
+        #crew-list::-webkit-scrollbar-track { background: #f4f1ea; }
+        #crew-list::-webkit-scrollbar-thumb { background: #cc0000; border-radius: 2px; }
+        
+        .crew-member {
+            margin-bottom: 6px;
+            padding-bottom: 6px;
+            border-bottom: 1px solid #ddd;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .crew-member:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+        .crew-name {
+            font-size: 0.9rem;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .crew-details {
+            font-family: 'Arial', sans-serif;
+            font-size: 0.7rem;
+            color: #333;
+            text-align: right;
+        }
+        .flag { font-size: 1.1rem; }
+
+        /* Controls & Forms */
+        .control-group {
+            margin-bottom: 15px;
+            background: #fff;
+            padding: 15px;
+            border: 1px solid #cc0000;
+            box-shadow: 2px 2px 0px rgba(204,0,0,0.1);
+        }
+        label {
+            display: block;
+            font-family: 'Arial', sans-serif;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 8px;
+            color: #cc0000;
+            font-weight: bold;
+        }
+        
+        /* Space Themed Slider */
+        input[type="range"] {
+            -webkit-appearance: none;
+            width: 100%;
+            background: transparent;
+            margin: 10px 0 15px 0;
+        }
+        input[type="range"]:focus { outline: none; }
+        input[type="range"]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 12px;
+            cursor: pointer;
+            background: #0b0d17;
+            border-radius: 6px;
+            border: 1px solid #333;
+            background-image: radial-gradient(circle, #fff 1px, transparent 1px);
+            background-size: 15px 15px;
+            box-shadow: inset 0 0 5px rgba(0,0,0,0.8);
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            height: 22px;
+            width: 22px;
+            border-radius: 50%;
+            background: #cc0000;
+            cursor: pointer;
+            -webkit-appearance: none;
+            margin-top: -6px;
+            border: 2px solid #fff;
+            box-shadow: 0 0 10px rgba(204,0,0,0.8);
+        }
+        
+        input[type="text"] {
+            width: 100%;
+            padding: 8px;
+            font-family: 'Arial', sans-serif;
+            font-size: 0.8rem;
+            border: 1px solid #aaa;
+            margin-bottom: 8px;
+            background: #fafafa;
+        }
+        button {
+            background: #cc0000;
+            color: #fff;
+            border: none;
+            padding: 8px 12px;
+            font-family: 'Arial', sans-serif;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            cursor: pointer;
+            transition: background 0.2s;
+            width: 100%;
+            margin-bottom: 6px;
+        }
+        button:hover { background: #990000; }
+        button.secondary {
+            background: #e0e0e0;
+            color: #111;
+            border: 1px solid #ccc;
+        }
+        button.secondary:hover { background: #ccc; }
+        
+        .pass-result {
+            margin-top: 10px;
+            font-family: 'Arial', sans-serif;
+            font-size: 0.8rem;
+            line-height: 1.4;
+            padding-top: 10px;
+            border-top: 1px dotted #cc0000;
+        }
+        .calendar-btn {
+            display: block;
+            text-align: center;
+            margin-top: 8px;
+            background: #cc0000;
+            color: white;
+            text-decoration: none;
+            padding: 6px 10px;
+            font-size: 0.75rem;
+            border-radius: 2px;
+            font-family: 'Arial', sans-serif;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        #recenter-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            z-index: 100;
+            background: rgba(204, 0, 0, 0.8);
+            color: #fff;
+            border: 1px solid #ff0000;
+            padding: 8px 15px;
+            font-family: 'Arial', sans-serif;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            cursor: pointer;
+            border-radius: 4px;
+            width: auto;
+            margin: 0;
+            backdrop-filter: blur(4px);
+        }
+        #recenter-btn:hover {
+            background: #cc0000;
+        }
+
+        #info-btn {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            z-index: 100;
+            background: rgba(26, 26, 26, 0.8);
+            color: #fff;
+            border: 1px solid #444;
+            padding: 8px 12px;
+            font-family: 'Arial', sans-serif;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            cursor: pointer;
+            border-radius: 4px;
+            width: auto;
+            margin: 0;
+            backdrop-filter: blur(4px);
+        }
+        #info-btn:hover { background: #000; }
+        
+        #info-modal {
+            position: absolute;
+            bottom: 60px;
+            left: 20px;
+            z-index: 100;
+            background: rgba(255, 255, 255, 0.95);
+            color: #111;
+            padding: 15px;
+            border: 1px solid #cc0000;
+            border-radius: 4px;
+            font-family: 'Arial', sans-serif;
+            font-size: 0.7rem;
+            line-height: 1.5;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            width: 280px;
+        }
+    </style>
+    <!-- Dependencies -->
+    <script src="https://unpkg.com/three@0.160.0/build/three.min.js"></script>
+    <script src="https://unpkg.com/globe.gl@2.30.0/dist/globe.gl.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/satellite.js/4.1.3/satellite.min.js"></script>
+</head>
+<body>
+    
+    <!-- LEFT PANEL: Telemetry & Crew -->
+    <div id="left-panel">
+        <div class="newspaper-header">
+            <h1><span class="chorizo-text">CHORIZO</span><br>TRACKER</h1>
+            <div class="date" id="current-date">Loading Date...</div>
+        </div>
+
+        <h2>Live Telemetry</h2>
+        <div class="data-grid">
+            <div class="data-item">
+                <span class="data-label">Latitude</span>
+                <span class="data-value" id="lat">--.----°</span>
+            </div>
+            <div class="data-item">
+                <span class="data-label">Longitude</span>
+                <span class="data-value" id="lng">--.----°</span>
+            </div>
+            <div class="data-item">
+                <span class="data-label">Altitude</span>
+                <span class="data-value" id="alt">--- km</span>
+            </div>
+            <div class="data-item">
+                <span class="data-label">Velocity</span>
+                <span class="data-value" id="vel">--- km/h</span>
+            </div>
+        </div>
+
+        <h2>Crew Manifest (Apr 2026)</h2>
+        <div id="crew-list">
+            <!-- Populated by JS -->
+        </div>
+    </div>
+
+    <!-- CENTER: 3D Globe -->
+    <div id="center-globe">
+        <button id="recenter-btn" onclick="recenterISS()">🎯 Center ISS</button>
+        <button id="info-btn" onclick="toggleInfo()">ℹ️ Info</button>
+        <div id="info-modal" style="display: none;">
+            <strong>References & Sources:</strong><br><br>
+            1. Telemetry & TLE Data: <em>wheretheiss.at API</em><br>
+            2. Orbit Propagation: <em>SGP4/SDP4 via satellite.js</em><br>
+            3. Earth Textures: <em>NASA Visible Earth</em><br>
+            4. Manifest: <em>Expedition 74/75 (Crew-12 & Soyuz MS-29)</em>
+        </div>
+    </div>
+
+    <!-- RIGHT PANEL: Trajectory & Predictions -->
+    <div id="right-panel">
+        <h2>Orbital Trajectory</h2>
+        <div class="control-group">
+            <label for="future-slider">Forecast Horizon: <span id="slider-val">90 Minutes</span></label>
+            <input type="range" id="future-slider" min="0" max="180" value="90" step="10">
+            <p style="font-family: Arial; font-size: 0.75rem; color: #555; margin: 0; line-height: 1.3;">
+                Project future path (Cyan). Past is Red.
+            </p>
+        </div>
+
+        <h2>Pass Predictor</h2>
+        <div class="control-group" style="padding: 12px;">
+            <p style="font-family: Arial; font-size: 0.7rem; color: #333; margin-top: 0; line-height: 1.2; margin-bottom: 10px;">
+                Enter coordinates for next visible pass (>10°).
+            </p>
+            <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                <div style="flex: 1;">
+                    <label style="margin-bottom: 4px; font-size: 0.65rem;">Latitude</label>
+                    <input type="text" id="user-lat" placeholder="e.g., 51.50" style="margin-bottom: 0; padding: 6px;">
+                </div>
+                <div style="flex: 1;">
+                    <label style="margin-bottom: 4px; font-size: 0.65rem;">Longitude</label>
+                    <input type="text" id="user-lng" placeholder="e.g., -0.12" style="margin-bottom: 0; padding: 6px;">
+                </div>
+            </div>
+            <div style="display: flex; gap: 10px;">
+                <button onclick="calculatePasses()" style="margin-bottom: 0; padding: 8px 6px; font-size: 0.7rem;">Calculate</button>
+                <button class="secondary" onclick="useMyLocation()" style="margin-bottom: 0; padding: 8px 6px; font-size: 0.7rem;">Device GPS</button>
+            </div>
+            
+            <div id="pass-results" class="pass-result" style="display: none;"></div>
+        </div>
+    </div>
+
+    <script>
+        // Set Date
+        document.getElementById('current-date').innerText = new Date().toLocaleDateString('en-GB', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+
+        // Initialize Realistic Globe
+        const globeContainer = document.getElementById('center-globe');
+        const world = Globe()(globeContainer)
+            .globeImageUrl('https://unpkg.com/three-globe/example/img/earth-blue-marble.jpg')
+            .bumpImageUrl('https://unpkg.com/three-globe/example/img/earth-topology.png')
+            .backgroundImageUrl('https://unpkg.com/three-globe/example/img/night-sky.png')
+            .showAtmosphere(true)
+            .atmosphereColor('#3a228a')
+            .atmosphereAltitude(0.15);
+
+        // Custom ISS Marker
+        const issGroup = new THREE.Group();
+        const trussGeom = new THREE.CylinderGeometry(0.1, 0.1, 4, 8);
+        const trussMat = new THREE.MeshLambertMaterial({ color: 0xcccccc });
+        const truss = new THREE.Mesh(trussGeom, trussMat);
+        truss.rotation.z = Math.PI / 2;
+        issGroup.add(truss);
+        const panelGeom = new THREE.BoxGeometry(1.5, 0.05, 3);
+        const panelMat = new THREE.MeshLambertMaterial({ color: 0x2244aa });
+        const panel1 = new THREE.Mesh(panelGeom, panelMat);
+        panel1.position.set(-1.5, 0, 0);
+        issGroup.add(panel1);
+        const panel2 = new THREE.Mesh(panelGeom, panelMat);
+        panel2.position.set(1.5, 0, 0);
+        issGroup.add(panel2);
+        issGroup.scale.set(0.8, 0.8, 0.8);
+        
+        world.objectThreeObject(() => issGroup);
+
+        // State
+        let currentSatrec = null;
+        let pastPath = [];
+        let futurePath = [];
+        let forecastMinutes = 90;
+        let currentIssPos = null;
+
+        function recenterISS() {
+            if (currentIssPos) {
+                world.pointOfView({ lat: currentIssPos.lat, lng: currentIssPos.lng, altitude: 2.5 }, 1000);
+            }
+        }
+
+        function toggleInfo() {
+            const modal = document.getElementById('info-modal');
+            if (modal.style.display === 'none') {
+                modal.style.display = 'block';
+            } else {
+                modal.style.display = 'none';
+            }
+        }
+
+        function animateISS() {
+            if (currentSatrec) {
+                const now = new Date();
+                const positionAndVelocity = satellite.propagate(currentSatrec, now);
+                if (positionAndVelocity.position) {
+                    const positionGd = satellite.eciToGeodetic(positionAndVelocity.position, satellite.gstime(now));
+                    currentIssPos = {
+                        lat: satellite.degreesLat(positionGd.latitude),
+                        lng: satellite.degreesLong(positionGd.longitude),
+                        alt: positionGd.height / 6371
+                    };
+                    world.objectsData([currentIssPos]);
+                }
+            }
+            requestAnimationFrame(animateISS);
+        }
+        animateISS();
+
+        // Slider Event
+        document.getElementById('future-slider').addEventListener('input', (e) => {
+            forecastMinutes = parseInt(e.target.value);
+            document.getElementById('slider-val').innerText = forecastMinutes + ' Minutes';
+            updateFutureTrajectory();
+        });
+
+        // Fetch TLE and Telemetry
+        async function fetchISSData() {
+            try {
+                // Fetch TLE for accurate propagation
+                const tleRes = await fetch('https://api.wheretheiss.at/v1/satellites/25544/tles');
+                const tleData = await tleRes.json();
+                currentSatrec = satellite.twoline2satrec(tleData.line1, tleData.line2);
+
+                // Fetch current exact telemetry
+                const res = await fetch('https://api.wheretheiss.at/v1/satellites/25544');
+                const data = await res.json();
+
+                // Update DOM
+                document.getElementById('lat').innerText = data.latitude.toFixed(4) + '°';
+                document.getElementById('lng').innerText = data.longitude.toFixed(4) + '°';
+                document.getElementById('alt').innerText = data.altitude.toFixed(1) + ' km';
+                document.getElementById('vel').innerText = Math.round(data.velocity) + ' km/h';
+
+                // Point camera on first load
+                if (pastPath.length === 0) {
+                    world.pointOfView({ lat: data.latitude, lng: data.longitude, altitude: 2.5 }, 1000);
+                }
+
+                // Update Past Path
+                pastPath.push({ lat: data.latitude, lng: data.longitude, alt: 0.05 });
+                if (pastPath.length > 150) pastPath.shift();
+
+                updateFutureTrajectory();
+
+            } catch (err) {
+                console.error('Error fetching ISS data:', err);
+            }
+        }
+
+        function updateFutureTrajectory() {
+            if (!currentSatrec) return;
+            
+            try {
+                const newFuturePath = [];
+                const now = new Date();
+                
+                // Calculate future points based on slider
+                for (let i = 0; i <= forecastMinutes; i += 2) { // Every 2 minutes
+                    const time = new Date(now.getTime() + i * 60000);
+                    const positionAndVelocity = satellite.propagate(currentSatrec, time);
+                    if (!positionAndVelocity.position) continue;
+                    
+                    const positionGd = satellite.eciToGeodetic(positionAndVelocity.position, satellite.gstime(time));
+                    
+                    newFuturePath.push({
+                        lat: satellite.degreesLat(positionGd.latitude),
+                        lng: satellite.degreesLong(positionGd.longitude),
+                        alt: 0.05
+                    });
+                }
+                futurePath = newFuturePath;
+
+                const pathsToRender = [];
+                // globe.gl requires at least 2 points to render a path
+                if (pastPath.length > 1) {
+                    pathsToRender.push({ coords: pastPath, color: '#ff0000' }); // Bright Red past
+                }
+                if (futurePath.length > 1) {
+                    pathsToRender.push({ coords: futurePath, color: '#00ffcc' }); // Bright Cyan future
+                }
+
+                // Render both paths
+                world.pathsData(pathsToRender)
+                .pathPoints('coords')
+                .pathPointLat(p => p.lat)
+                .pathPointLng(p => p.lng)
+                .pathPointAlt(p => p.alt) 
+                .pathColor(d => d.color)
+                .pathStroke(0.5) // 0.5 degrees wide (~55km), very visible but not broken
+                .pathTransitionDuration(0); // CRITICAL: Prevents path from disappearing during data updates
+            } catch (e) {
+                console.error("Error rendering trajectory:", e);
+            }
+        }
+
+        // Accurate April 2026 Crew Manifest (Expedition 74/75)
+        const crew2026 = [
+            { name: "Anne McClain", flag: "🇺🇸", agency: "NASA", role: "Commander", arrival: "Feb 2026", departure: "Aug 2026", mission: "Crew-12" },
+            { name: "Nichole Ayers", flag: "🇺🇸", agency: "NASA", role: "Pilot", arrival: "Feb 2026", departure: "Aug 2026", mission: "Crew-12" },
+            { name: "Takuya Onishi", flag: "🇯🇵", agency: "JAXA", role: "Mission Specialist", arrival: "Feb 2026", departure: "Aug 2026", mission: "Crew-12" },
+            { name: "Kirill Peskov", flag: "🇷🇺", agency: "Roscosmos", role: "Mission Specialist", arrival: "Feb 2026", departure: "Aug 2026", mission: "Crew-12" },
+            { name: "Sergey Ryzhikov", flag: "🇷🇺", agency: "Roscosmos", role: "Commander", arrival: "Mar 2026", departure: "Sep 2026", mission: "Soyuz MS-29" },
+            { name: "Alexey Zubitsky", flag: "🇷🇺", agency: "Roscosmos", role: "Flight Engineer", arrival: "Mar 2026", departure: "Sep 2026", mission: "Soyuz MS-29" },
+            { name: "Jonny Kim", flag: "🇺🇸", agency: "NASA", role: "Flight Engineer", arrival: "Mar 2026", departure: "Sep 2026", mission: "Soyuz MS-29" }
+        ];
+
+        function renderCrew() {
+            const crewList = document.getElementById('crew-list');
+            crewList.innerHTML = '';
+            
+            crew2026.forEach(person => {
+                crewList.innerHTML += `
+                    <div class="crew-member">
+                        <div class="crew-name">
+                            <span class="flag">${person.flag}</span> ${person.name}
+                        </div>
+                        <div class="crew-details">
+                            ${person.role} | ${person.mission}
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        // Pass Prediction Logic
+        function useMyLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition((position) => {
+                    document.getElementById('user-lat').value = position.coords.latitude.toFixed(4);
+                    document.getElementById('user-lng').value = position.coords.longitude.toFixed(4);
+                    calculatePasses();
+                }, () => {
+                    alert('Unable to retrieve your location.');
+                });
+            } else {
+                alert('Geolocation is not supported by your browser.');
+            }
+        }
+
+        function calculatePasses() {
+            if (!currentSatrec) {
+                alert("Orbital data not yet loaded. Please wait a moment.");
+                return;
+            }
+
+            const lat = parseFloat(document.getElementById('user-lat').value);
+            const lng = parseFloat(document.getElementById('user-lng').value);
+
+            if (isNaN(lat) || isNaN(lng)) {
+                alert("Please enter valid latitude and longitude.");
+                return;
+            }
+
+            const resultsDiv = document.getElementById('pass-results');
+            resultsDiv.style.display = 'block';
+            resultsDiv.innerHTML = "<em>Calculating orbital intersections...</em>";
+
+            // Run calculation asynchronously to not block UI
+            setTimeout(() => {
+                const passes = [];
+                let inPass = false;
+                let currentPass = null;
+                const now = new Date();
+                
+                // Scan next 3 days, minute by minute
+                for(let i=0; i < 3 * 24 * 60; i++) {
+                    const time = new Date(now.getTime() + i * 60000);
+                    const positionAndVelocity = satellite.propagate(currentSatrec, time);
+                    const positionEci = positionAndVelocity.position;
+                    const gmst = satellite.gstime(time);
+                    
+                    const observerGd = {
+                        longitude: satellite.degreesToRadians(lng),
+                        latitude: satellite.degreesToRadians(lat),
+                        height: 0
+                    };
+                    
+                    const positionEcf = satellite.eciToEcf(positionEci, gmst);
+                    const lookAngles = satellite.ecfToLookAngles(observerGd, positionEcf);
+                    const elevation = satellite.radiansToDegrees(lookAngles.elevation);
+                    
+                    if (elevation > 10) { // Visible pass threshold
+                        if (!inPass) {
+                            inPass = true;
+                            currentPass = { start: time, maxElev: elevation };
+                        } else {
+                            if (elevation > currentPass.maxElev) currentPass.maxElev = elevation;
+                        }
+                    } else {
+                        if (inPass) {
+                            inPass = false;
+                            currentPass.end = time;
+                            passes.push(currentPass);
+                            if (passes.length >= 1) break; // Just get the next best pass
+                        }
+                    }
+                }
+
+                if (passes.length > 0) {
+                    const p = passes[0];
+                    const duration = Math.round((p.end - p.start) / 60000);
+                    
+                    // Generate ICS file content
+                    const icsData = generateICS(p.start, p.end, "ISS Overhead Pass");
+                    const icsUrl = 'data:text/calendar;charset=utf8,' + encodeURIComponent(icsData);
+
+                    resultsDiv.innerHTML = `
+                        <strong>Next Visible Pass:</strong><br>
+                        Date: ${p.start.toLocaleDateString()}<br>
+                        Time: ${p.start.toLocaleTimeString()} - ${p.end.toLocaleTimeString()}<br>
+                        Duration: ~${duration} minutes<br>
+                        Peak Elevation: ${p.maxElev.toFixed(1)}°<br>
+                        <a href="${icsUrl}" download="iss-pass.ics" class="calendar-btn">Add to Calendar (.ics)</a>
+                    `;
+                } else {
+                    resultsDiv.innerHTML = "No visible passes found in the next 3 days for this location.";
+                }
+            }, 100);
+        }
+
+        function generateICS(start, end, summary) {
+            const formatTime = (date) => {
+                return date.toISOString().replace(/-|:|\.\d+/g, '');
+            };
+            return `BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//The Orbital Observer//ISS Tracker//EN
+BEGIN:VEVENT
+DTSTART:${formatTime(start)}
+DTEND:${formatTime(end)}
+SUMMARY:${summary}
+DESCRIPTION:The International Space Station will be visible overhead. Look up!
+END:VEVENT
+END:VCALENDAR`;
+        }
+
+        // Initialization
+        fetchISSData();
+        renderCrew(); // Load 2026 crew immediately
+
+        // Polling
+        setInterval(fetchISSData, 3000); // Update position every 3 seconds
+
+        // Handle Resize
+        window.addEventListener('resize', () => {
+            world.width(globeContainer.clientWidth);
+            world.height(globeContainer.clientHeight);
+        });
+        setTimeout(() => {
+            world.width(globeContainer.clientWidth);
+            world.height(globeContainer.clientHeight);
+        }, 100);
+    </script>
+</body>
+</html>

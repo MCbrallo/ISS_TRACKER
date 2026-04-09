@@ -1,0 +1,5 @@
+{
+  "name": "ISS Live Dashboard",
+  "description": "Real-time 3D tracking of the International Space Station with live telemetry and crew manifest.",
+  "requestFramePermissions": []
+}
