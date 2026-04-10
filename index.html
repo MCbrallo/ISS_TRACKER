@@ -37,12 +37,16 @@
         }
         #left-panel { border-right: 3px solid #cc0000; }
         #right-panel { border-left: 3px solid #cc0000; }
-        #center-globe { 
+        #center-wrapper { 
             flex-grow: 1; 
             position: relative; 
             background: #000; 
-            cursor: grab;
             overflow: hidden;
+        }
+        #center-globe {
+            width: 100%;
+            height: 100%;
+            cursor: grab;
         }
         #center-globe:active { cursor: grabbing; }
 
@@ -249,64 +253,121 @@
             letter-spacing: 0.05em;
         }
 
+        .floating-btn {
+            z-index: 100;
+            background: #f4f1ea;
+            color: #1a1a1a;
+            border: 2px solid #1a1a1a;
+            padding: 8px 16px;
+            font-family: 'Arial', sans-serif;
+            font-size: 0.7rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            cursor: pointer;
+            border-radius: 0;
+            box-shadow: 3px 3px 0px #cc0000;
+            transition: all 0.2s ease;
+            width: auto;
+            margin: 0;
+        }
+        .floating-btn:hover {
+            background: #1a1a1a;
+            color: #f4f1ea;
+            transform: translate(-2px, -2px);
+            box-shadow: 5px 5px 0px #cc0000;
+        }
+        .floating-btn:active {
+            transform: translate(2px, 2px);
+            box-shadow: 1px 1px 0px #cc0000;
+        }
+
         #recenter-btn {
             position: absolute;
             top: 20px;
             right: 20px;
-            z-index: 100;
-            background: rgba(204, 0, 0, 0.8);
-            color: #fff;
-            border: 1px solid #ff0000;
-            padding: 8px 15px;
-            font-family: 'Arial', sans-serif;
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            cursor: pointer;
-            border-radius: 4px;
-            width: auto;
-            margin: 0;
-            backdrop-filter: blur(4px);
-        }
-        #recenter-btn:hover {
-            background: #cc0000;
         }
 
         #info-btn {
             position: absolute;
             bottom: 20px;
             left: 20px;
-            z-index: 100;
-            background: rgba(26, 26, 26, 0.8);
-            color: #fff;
-            border: 1px solid #444;
-            padding: 8px 12px;
-            font-family: 'Arial', sans-serif;
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            cursor: pointer;
-            border-radius: 4px;
-            width: auto;
-            margin: 0;
-            backdrop-filter: blur(4px);
         }
-        #info-btn:hover { background: #000; }
         
         #info-modal {
             position: absolute;
             bottom: 60px;
             left: 20px;
             z-index: 100;
-            background: rgba(255, 255, 255, 0.95);
+            background: #f4f1ea;
             color: #111;
             padding: 15px;
-            border: 1px solid #cc0000;
-            border-radius: 4px;
+            border: 2px solid #1a1a1a;
+            border-radius: 0;
             font-family: 'Arial', sans-serif;
             font-size: 0.7rem;
             line-height: 1.5;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            box-shadow: 4px 4px 0px #cc0000;
             width: 280px;
+        }
+
+        /* Model Toggle Switch */
+        #model-toggle-container {
+            position: absolute;
+            top: 65px;
+            right: 20px;
+            z-index: 100;
+            background: #f4f1ea;
+            padding: 6px 12px;
+            border: 2px solid #1a1a1a;
+            box-shadow: 3px 3px 0px #cc0000;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .toggle-label {
+            color: #1a1a1a;
+            font-family: 'Arial', sans-serif;
+            font-size: 0.7rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 40px;
+            height: 20px;
+        }
+        .switch input { 
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .slider-toggle {
+            position: absolute;
+            cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #555;
+            transition: .4s;
+            border-radius: 20px;
+        }
+        .slider-toggle:before {
+            position: absolute;
+            content: "";
+            height: 14px;
+            width: 14px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        input:checked + .slider-toggle {
+            background-color: #cc0000;
+        }
+        input:checked + .slider-toggle:before {
+            transform: translateX(20px);
         }
     </style>
     <!-- Dependencies -->
@@ -350,9 +411,20 @@
     </div>
 
     <!-- CENTER: 3D Globe -->
-    <div id="center-globe">
-        <button id="recenter-btn" onclick="recenterISS()">🎯 Center ISS</button>
-        <button id="info-btn" onclick="toggleInfo()">ℹ️ Info</button>
+    <div id="center-wrapper">
+        <div id="center-globe"></div>
+        <button id="recenter-btn" class="floating-btn" onclick="recenterISS()">Center ISS</button>
+        
+        <div id="model-toggle-container">
+            <span class="toggle-label">ISS</span>
+            <label class="switch">
+                <input type="checkbox" id="model-toggle">
+                <span class="slider-toggle"></span>
+            </label>
+            <span class="toggle-label chorizo-text">CHORIZO</span>
+        </div>
+
+        <button id="info-btn" class="floating-btn" onclick="toggleInfo()">Info</button>
         <div id="info-modal" style="display: none;">
             <strong>References & Sources:</strong><br><br>
             1. Telemetry & TLE Data: <em>wheretheiss.at API</em><br>
@@ -412,6 +484,9 @@
             .atmosphereAltitude(0.15);
 
         // Custom ISS Marker
+        const mainGroup = new THREE.Group();
+
+        // 1. ISS Model
         const issGroup = new THREE.Group();
         const trussGeom = new THREE.CylinderGeometry(0.1, 0.1, 4, 8);
         const trussMat = new THREE.MeshLambertMaterial({ color: 0xcccccc });
@@ -426,9 +501,42 @@
         const panel2 = new THREE.Mesh(panelGeom, panelMat);
         panel2.position.set(1.5, 0, 0);
         issGroup.add(panel2);
-        issGroup.scale.set(0.8, 0.8, 0.8);
         
-        world.objectThreeObject(() => issGroup);
+        mainGroup.add(issGroup);
+
+        // 2. Chorizo Model
+        const chorizoGroup = new THREE.Group();
+        const chorizoGeom = new THREE.CapsuleGeometry(0.4, 1.2, 4, 16);
+        const chorizoMat = new THREE.MeshStandardMaterial({ color: 0x8b2500, roughness: 0.8, bumpScale: 0.05 });
+        const chorizoMesh = new THREE.Mesh(chorizoGeom, chorizoMat);
+        chorizoMesh.rotation.z = Math.PI / 2;
+        chorizoGroup.add(chorizoMesh);
+        
+        // Chorizo string knot
+        const stringGeom = new THREE.TorusGeometry(0.1, 0.03, 4, 8);
+        const stringMat = new THREE.MeshBasicMaterial({ color: 0xdddddd });
+        const stringMesh = new THREE.Mesh(stringGeom, stringMat);
+        stringMesh.position.set(0.8, 0, 0);
+        stringMesh.rotation.y = Math.PI / 2;
+        chorizoGroup.add(stringMesh);
+
+        chorizoGroup.visible = false; // Hidden by default
+        mainGroup.add(chorizoGroup);
+
+        mainGroup.scale.set(0.8, 0.8, 0.8);
+        
+        world.objectThreeObject(() => mainGroup);
+
+        // Model Toggle Logic
+        document.getElementById('model-toggle').addEventListener('change', (e) => {
+            if (e.target.checked) {
+                issGroup.visible = false;
+                chorizoGroup.visible = true;
+            } else {
+                issGroup.visible = true;
+                chorizoGroup.visible = false;
+            }
+        });
 
         // State
         let currentSatrec = null;
